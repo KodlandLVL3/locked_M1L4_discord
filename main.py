@@ -2,8 +2,6 @@ import discord
 from discord.ext import commands
 from config import token 
 from logic import Pokemon
-from discord import File
-from io import BytesIO
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -21,16 +19,16 @@ async def go(ctx):
     if author not in Pokemon.pokemons.keys():
         pokemon = Pokemon(author)
         await ctx.send(await pokemon.info())
-        image_data = await pokemon.show_img()
-        if image_data:
-            image_stream = BytesIO(image_data)
-            image_stream.seek(0)
-            await ctx.send(file=File(fp=image_stream, filename='pokemon.png'))
+        image_url = await pokemon.show_img()
+        if image_url:
+            embed = discord.Embed()
+            embed.set_image(url=image_url)
+            await ctx.send(embed=embed)
         else:
             await ctx.send("Не удалось загрузить изображение покемона.")
     else:
         await ctx.send("Ты уже создал себе покемона.")
-
+        
 @bot.command()
 async def start(ctx):
     await ctx.send("Привет! Я бот для игры в покемонов, скорее попробуй создать себе покемона, нажимай - !go")

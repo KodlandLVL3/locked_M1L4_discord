@@ -26,12 +26,13 @@ class Pokemon:
         return f"Имя твоего покемона: {self.name}"
 
     async def show_img(self):
-        url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{self.pokemon_number}.png"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                if resp.status == 200:
-                    # Читаем данные изображения в память
-                    data = await resp.read()
-                    return data
+        # Асинхронный метод для получения URL изображения покемона через PokeAPI
+        url = f'https://pokeapi.co/api/v2/pokemon/{self.pokemon_number}'
+        async with aiohttp.ClientSession() as session:  # Открытие сессии HTTP
+            async with session.get(url) as response:  # Отправка GET запроса на получение данных о покемоне
+                if response.status == 200:
+                    data = await response.json()  # Получение JSON ответа
+                    img_url = data['sprites']['front_default']  # Получение URL покемона
+                    return img_url  # Возвращаем URL изображения
                 else:
-                    return None
+                    return None  # Возврат None, если запрос не удался
