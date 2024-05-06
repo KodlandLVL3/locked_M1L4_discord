@@ -1,23 +1,42 @@
-import telebot 
-from config import token
-
+import discord
+from discord.ext import commands
+from config import token 
 from logic import Pokemon
+from discord import File
+from io import BytesIO
 
-bot = telebot.TeleBot(token) 
+intents = discord.Intents.default()
+intents.messages = True
+bot = commands.Bot(command_prefix='!', intents=intents)
 
-@bot.message_handler(commands=['go'])
-def go(message):
-    if message.from_user.username not in Pokemon.pokemons.keys():
-        pokemon = Pokemon(message.from_user.username)
-        bot.send_message(message.chat.id, pokemon.info())
-        bot.send_photo(message.chat.id, pokemon.show_img())
+intents = discord.Intents.default()
+intents.messages = True
+intents.message_content = True
+intents.guilds = True 
+bot = commands.Bot(command_prefix='!', intents=intents)
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user.name}')
+
+@bot.command()
+async def go(ctx):
+    author = ctx.author.name
+    if author not in Pokemon.pokemons.keys():
+        pokemon = Pokemon(author)
+        await ctx.send(await pokemon.info())
+        image_data = await pokemon.show_img()
+        if image_data:
+            image_stream = BytesIO(image_data)
+            image_stream.seek(0)
+            await ctx.send(file=File(fp=image_stream, filename='pokemon.png'))
+        else:
+            await ctx.send("Не удалось загрузить изображение покемона.")
     else:
-        bot.reply_to(message, "Ты уже создал себе покемона")
+        await ctx.send("Ты уже создал себе покемона.")
 
+@bot.command()
+async def start(ctx):
+    await ctx.send("Привет! Я бот для игры в покемонов, скорее попробуй создать себе покемона, нажимай - !go")
 
-@bot.message_handler(commands=['start'])
-def start(message):
-    bot.send_message(message.chat.id, "Привет! Я бот для игры в покемонов, скорее попробуй создать себе покемона, нажимай - /go")
-
-
-bot.infinity_polling(none_stop=True)
+bot.run(token)
